@@ -1,0 +1,120 @@
+# BFree
+
+BFree is a full-stack recovery companion that helps people document daily progress as they reduce or quit an addictive habit. It ships with a token-based API, a React front end, and a Mongo-backed data model for user milestones and daily logs.
+
+## Features
+- Email/password authentication with JWT cookies, signup, login, logout, and token verification routes
+- Protected CRUD API for daily logs to record notes, mood, slips, and timestamps
+- User profile endpoints to update core details, change password, and track the selected addiction type and quit date
+- Milestone model ready to record sobriety achievements (target days, achieved state, date achieved)
+- React dashboard with sobriety clock, milestone tracker, motivational home page, and guarded profile area
+
+## Tech Stack
+- Backend: Node.js 20, Express 5, Mongoose 8, JWT, bcryptjs, cookie-parser
+- Frontend: React 19, Vite, React Router DOM, Axios
+- Tooling: Nodemon for hot reload, Cross-env for environment handling, ESLint for linting the client
+
+## Project Structure
+```
+break-free/
+├── client/             # Vite + React front end
+├── server/             # Express API and Mongo models
+├── package.json        # Root dependencies shared by both sides
+└── read.me             # Project overview (this file)
+```
+
+Key backend folders:
+- `server/controllers` – request handlers for auth, logs, and user profile operations
+- `server/models` – Mongoose schemas for `User`, `Log`, and `Milestone`
+- `server/routes` – Express routers mounted under `/api`
+- `server/middleware` – JWT auth guard that reads bearer tokens or signed cookies
+- `server/config/connect.js` – MongoDB connection helper with basic logging
+
+Key frontend folders:
+- `client/src/context` – React context for authentication state and helpers
+- `client/src/components` – UI building blocks such as the dashboard, sobriety clock, and protected route wrapper
+- `client/src/pages` – Top-level routes (Home, Login, Signup, Profile)
+- `client/src/utils/api.js` – Axios instance preconfigured with the API base URL and token interceptor
+
+## Prerequisites
+- Node.js 20.x (matching the `engine` field in the backend `package.json`)
+- npm 9+
+- A running MongoDB instance (local Docker container, Atlas cluster, etc.)
+
+## Environment Variables
+The backend reads environment files based on `NODE_ENV` (for example `.env.development`). Create `server/.env.development` with values similar to the following:
+```
+PORT=5005
+MONGO_URI=mongodb://127.0.0.1:27017/break-free
+JWT_SECRET=replace-with-a-strong-secret
+COOKIE_SECRET=replace-with-cookie-secret
+CORS_ORIGIN=http://localhost:5173
+```
+
+The front end expects a single variable to locate the API:
+```
+# client/.env
+VITE_API_URL=http://localhost:5005/api
+```
+
+For production, create matching `.env.production` and `.env` files with the appropriate values.
+
+## Installation
+1. Install backend dependencies:
+   ```bash
+   cd server
+   npm install
+   ```
+2. Install frontend dependencies:
+   ```bash
+   cd ../client
+   npm install
+   ```
+
+## Running the App Locally
+Open two terminals from the project root.
+
+Backend (Express API):
+```bash
+cd server
+npm run dev
+```
+The server listens on `http://localhost:5005` by default and connects to MongoDB before starting.
+
+Frontend (React app):
+```bash
+cd client
+npm run dev
+```
+Vite serves the UI on `http://localhost:5173` and proxies requests to the API URL defined in `VITE_API_URL`.
+
+## API Overview
+| Method | Route                  | Description                              |
+|--------|------------------------|------------------------------------------|
+| POST   | `/api/auth/signup`     | Create a user and set a JWT cookie       |
+| POST   | `/api/auth/login`      | Authenticate and set a JWT cookie        |
+| GET    | `/api/auth/verify`     | Validate the current JWT                 |
+| POST   | `/api/auth/logout`     | Clear the auth cookie                    |
+| GET    | `/api/users/me`        | Fetch the authenticated user profile     |
+| PATCH  | `/api/users/me`        | Update profile fields                    |
+| PATCH  | `/api/users/me/password` | Change the current password            |
+| GET    | `/api/logs`            | List daily logs with optional filters    |
+| POST   | `/api/logs`            | Create a new log entry                   |
+| GET    | `/api/logs/:id`        | Retrieve a single log by id              |
+| PATCH  | `/api/logs/:id`        | Update a log entry                       |
+| DELETE | `/api/logs/:id`        | Delete a log entry                       |
+
+Authentication is required for all `/api/users` and `/api/logs` routes. Tokens can be supplied either via the `Authorization: Bearer <token>` header or by relying on the `token` httpOnly cookie that the auth routes set.
+
+## Frontend Notes
+- The `AuthProvider` verifies stored tokens on load, guards protected routes, and exposes `login`, `signup`, and `logout` helpers.
+- Dashboard widgets currently persist demo data (login count, sobriety start date, goals) in `localStorage`; these can be replaced with live data from the API endpoints above.
+- UI styling lives under `client/src/styles` and is imported globally through the main entry points.
+
+## Troubleshooting
+- If the API refuses connections, confirm MongoDB is reachable and the `MONGO_URI` string is correct.
+- When calling the API from another origin, ensure `CORS_ORIGIN` includes the frontend URL and that the browser sends credentials if you rely on cookies.
+- Delete `node_modules` and reinstall dependencies if you run into inconsistent versions after switching Node releases.
+
+## Next Steps
+Potential enhancements include wiring the milestone model to the UI, surfacing aggregated sobriety stats, and adding automated tests for the API routes.
