@@ -1,7 +1,13 @@
 import axios from "axios";
 
+const rawBase = import.meta.env.VITE_API_URL || "http://localhost:5005/api";
+const normalizedBase = (() => {
+  const trimmed = rawBase.replace(/\/$/, "");
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+})();
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5005/api",
+  baseURL: normalizedBase,
   withCredentials: true,
 });
 

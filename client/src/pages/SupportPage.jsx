@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const faq = [
   {
-    question: "Do I need to be 100% sober to use BFree?",
+    question: "Do I need to be 100% sober to use BeFree?",
     answer:
       "Not at all. Whether you are cutting down, aiming for moderation, or going fully substance-free, the app adapts to your pace.",
   },
@@ -44,7 +44,7 @@ export default function SupportPage() {
         <h1 className="title">Support & guidance</h1>
         <p className="subtitle">
           Recovery feels lighter when you have a plan. Here’s how to get the most
-          out of BFree, plus answers to common questions.
+          out of BeFree, plus answers to common questions.
         </p>
 
         <div className="steps-grid">

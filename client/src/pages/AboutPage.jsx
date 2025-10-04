@@ -9,7 +9,7 @@ const coreValues = [
   {
     title: "Progress over perfection",
     description:
-    "Lapses are data, not failure. BFree helps you notice what triggered the moment and how you can respond differently next time.",
+    "Lapses are data, not failure. BeFree helps you notice what triggered the moment and how you can respond differently next time.",
   },
   {
     title: "Privacy respected",
@@ -43,7 +43,7 @@ export default function AboutPage() {
         <span className="badge">Our intention</span>
         <h1 className="title">A kinder companion for change</h1>
         <p className="subtitle">
-          BFree exists to support anyone reducing or quitting an addictive
+          BeFree exists to support anyone reducing or quitting an addictive
           habit—drinks, cigarettes, doom scrolling, or anything else that no
           longer serves you.
         </p>
@@ -59,7 +59,7 @@ export default function AboutPage() {
       </section>
 
       <section className="pillars glass-panel">
-        <h2 className="title">What makes BFree different?</h2>
+        <h2 className="title">What makes BeFree different?</h2>
         <div className="pillars-grid">
           {pillars.map((pillar) => (
             <article key={pillar.title} className="pillar-card">

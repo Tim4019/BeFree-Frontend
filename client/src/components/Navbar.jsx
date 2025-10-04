@@ -44,8 +44,8 @@ export default function Navbar() {
       <nav className="nav">
         {/* Left: Brand Logo */}
         <Link className="brand" to="/">
-          <img className="logo" src="/logo.jpg" alt="BFree Logo" />
-          <span className="brand-text">BFree</span>
+          <img className="logo" src="/logo.jpg" alt="BeFree Logo" />
+          <span className="brand-text">BeFree</span>
         </Link>
 
         <div className="nav-menu" ref={menuRef}>

@@ -9,10 +9,17 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   const verify = async (token, { showLoader = true } = {}) => {
+    const activeToken = token ?? localStorage.getItem("authToken");
+    if (!activeToken) {
+      setUser(null);
+      if (showLoader) setLoading(false);
+      return;
+    }
+
     if (showLoader) setLoading(true);
     try {
-      const config = token
-        ? { headers: { Authorization: `Bearer ${token}` } }
+      const config = activeToken
+        ? { headers: { Authorization: `Bearer ${activeToken}` } }
         : undefined;
       const response = await api.get("/auth/verify", config);
       if (response.status === 200) {
@@ -23,7 +30,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.log("verify error:", err);
       setUser(null);
-      if (token) localStorage.removeItem("authToken");
+      if (activeToken) localStorage.removeItem("authToken");
     } finally {
       if (showLoader) setLoading(false);
     }

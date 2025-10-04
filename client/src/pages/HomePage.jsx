@@ -52,7 +52,7 @@ export default function HomePage() {
         <img src={randomImage} alt="Calm background" className="hero-img" />
         <div className="hero-overlay">
           <span className="badge">Your recovery companion</span>
-          <h1 className="hero-title">BFree</h1>
+          <h1 className="hero-title">BeFree</h1>
           <p className="hero-subtitle">
             A gentle space to log progress, celebrate milestones, and stay
             connected to your "why" while you reduce or quit any addiction.

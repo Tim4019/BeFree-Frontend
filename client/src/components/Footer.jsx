@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <p className="footer-text">
-        © {new Date().getFullYear()} BFree — Built with ❤️
+        © {new Date().getFullYear()} BeFree — Built with ❤️
       </p>
       <div className="footer-links">
         <Link to="/resources" className="footer-link">Resources</Link>

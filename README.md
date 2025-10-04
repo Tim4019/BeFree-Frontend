@@ -1,6 +1,6 @@
-# 🌱 BFree  
+# 🌱 BeFree  
 
-is a **full-stack recovery companion app** that helps people track their progress when reducing or quitting an addictive habit.  
+BeFree is a **full-stack recovery companion app** that helps people track their progress when reducing or quitting an addictive habit.  
 
 It combines a **Node.js + Express API**, a **React frontend**, and a **MongoDB database** to deliver tools for habit tracking, daily journaling, and celebrating sobriety milestones.  
 
