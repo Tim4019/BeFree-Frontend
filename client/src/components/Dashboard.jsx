@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -119,6 +120,24 @@ export default function Dashboard() {
     });
   };
 
+  const handleDeleteLog = async (logId) => {
+    if (!logId || deletingId) return;
+    const confirmed = window.confirm("Delete this log entry?");
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(logId);
+      setError(null);
+      await api.delete(`/logs/${logId}`);
+      setLogs((prev) => prev.filter((entry) => entry._id !== logId));
+    } catch (err) {
+      console.error("Failed to delete log", err);
+      setError("Could not delete that entry. Try again in a moment.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const lastMoodDetails = stats.lastMood ? findMoodDetails(stats.lastMood) : null;
 
   return (
@@ -199,7 +218,7 @@ export default function Dashboard() {
               const moodDetails = log.mood ? findMoodDetails(log.mood) : null;
               return (
                 <li key={log._id} className="recent-item">
-                  <div>
+                  <div className="recent-content">
                     <p className="recent-date">
                       {new Date(log.at).toLocaleString(undefined, {
                         dateStyle: "medium",
@@ -240,6 +259,16 @@ export default function Dashboard() {
                           #{tag}
                         </span>
                       ))}
+                  </div>
+                  <div className="recent-actions">
+                    <button
+                      type="button"
+                      className="btn btn-ghost recent-delete"
+                      onClick={() => handleDeleteLog(log._id)}
+                      disabled={deletingId === log._id}
+                    >
+                      {deletingId === log._id ? "Removing…" : "Delete"}
+                    </button>
                   </div>
                 </li>
               );

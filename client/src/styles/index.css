@@ -521,6 +521,10 @@ a {
   padding-bottom: 0;
 }
 
+.recent-content {
+  flex: 1;
+}
+
 .recent-date {
   font-weight: 600;
   font-size: 0.92rem;
@@ -537,6 +541,28 @@ a {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.recent-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.recent-delete {
+  color: var(--danger);
+  border-color: rgba(var(--danger-rgb), 0.35);
+  padding: 0.4rem 1rem;
+}
+
+.recent-delete:hover {
+  background: rgba(var(--danger-rgb), 0.12);
+  color: var(--danger);
+}
+
+.recent-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .tag {
