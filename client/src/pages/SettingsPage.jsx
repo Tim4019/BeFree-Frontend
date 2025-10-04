@@ -12,6 +12,7 @@ const addictionOptions = [
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuthContext();
+
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
@@ -27,6 +28,9 @@ export default function SettingsPage() {
   });
   const [passwordStatus, setPasswordStatus] = useState(null);
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+
+  // NEW: delete button loading state
+  const [deletePending, setDeletePending] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -49,6 +53,37 @@ export default function SettingsPage() {
     setPasswordForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // NEW: junior-friendly delete handler
+  const handleDeleteAccount = async () => {
+    // 1) Ask the user to confirm
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+  
+    setDeletePending(true);
+
+    // 3) Try to delete the account
+    try {
+      await api.delete("/users/me"); 
+    } catch (err) {
+      alert(
+        err?.response?.data?.error ||
+          "Could not delete your account. Please try again."
+      );
+      setDeletePending(false);
+      return;
+    }
+
+   
+    api.post("/auth/logout").catch(() => {});
+
+   
+    localStorage.removeItem("authToken");
+    window.location.href = "/"; 
+  };
+
   const submitProfile = async (event) => {
     event.preventDefault();
     if (!user) return;
@@ -58,7 +93,7 @@ export default function SettingsPage() {
 
     try {
       const payload = {
-        username: profileForm.name,
+        username: profileForm.name, // keep as your backend expects
         email: profileForm.email,
         addictionType: profileForm.addictionType || undefined,
       };
@@ -133,7 +168,9 @@ export default function SettingsPage() {
             <input
               className="input"
               value={profileForm.name}
-              onChange={(event) => handleProfileChange("name", event.target.value)}
+              onChange={(event) =>
+                handleProfileChange("name", event.target.value)
+              }
               required
             />
           </label>
@@ -181,9 +218,14 @@ export default function SettingsPage() {
             />
           </label>
 
-          <button className="btn btn-primary" type="submit" disabled={profileSubmitting}>
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={profileSubmitting}
+          >
             {profileSubmitting ? "Saving..." : "Save changes"}
           </button>
+
           {profileStatus && (
             <p className={profileStatus.type === "success" ? "success" : "error"}>
               {profileStatus.message}
@@ -195,6 +237,7 @@ export default function SettingsPage() {
       <section className="glass-panel">
         <form className="form settings-form" onSubmit={submitPassword}>
           <h2>Change password</h2>
+
           <label className="label">
             <span className="label-text">Current password</span>
             <input
@@ -222,19 +265,40 @@ export default function SettingsPage() {
             />
           </label>
 
-          <button className="btn btn-primary" type="submit" disabled={passwordSubmitting}>
+          <button
+            className="btn btn-primary"
+            type="submit"
+            disabled={passwordSubmitting}
+          >
             {passwordSubmitting ? "Updating..." : "Update password"}
           </button>
+
           {passwordStatus && (
-            <p
-              className={
-                passwordStatus.type === "success" ? "success" : "error"
-              }
-            >
+            <p className={passwordStatus.type === "success" ? "success" : "error"}>
               {passwordStatus.message}
             </p>
           )}
         </form>
+      </section>
+
+      {/* NEW: Danger zone with delete button */}
+      <section className="glass-panel">
+        <div className="form settings-form">
+          <h2>Danger zone</h2>
+          <p className="subtitle">
+            This permanently removes your account and related data.
+          </p>
+
+          <button
+            type="button"
+            className="btn btn-outline btn-danger"
+            onClick={handleDeleteAccount}
+            disabled={deletePending}
+            aria-busy={deletePending ? "true" : "false"}
+          >
+            {deletePending ? "Deleting…" : "Delete account"}
+          </button>
+        </div>
       </section>
     </div>
   );
