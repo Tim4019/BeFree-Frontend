@@ -1,97 +1,155 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api.js";
 import { AuthContext } from "./AuthContext.js";
 
+function extractErrorMessage(error, fallback = "Something went wrong") {
+  return (
+    error?.response?.data?.error ||
+    error?.message ||
+    fallback
+  );
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem("authToken"));
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
   const navigate = useNavigate();
 
-  const verify = async (token, { showLoader = true } = {}) => {
-    const activeToken = token ?? localStorage.getItem("authToken");
-    if (!activeToken) {
-      setUser(null);
-      if (showLoader) setLoading(false);
-      return;
+  const persistToken = useCallback((token) => {
+    if (token) {
+      localStorage.setItem("authToken", token);
+      setAuthToken(token);
+    } else {
+      localStorage.removeItem("authToken");
+      setAuthToken(null);
     }
+  }, []);
 
-    if (showLoader) setLoading(true);
-    try {
-      const config = activeToken
-        ? { headers: { Authorization: `Bearer ${activeToken}` } }
-        : undefined;
-      const response = await api.get("/auth/verify", config);
-      if (response.status === 200) {
-        setUser(response.data.payload);
-      } else {
+  const verify = useCallback(
+    async (token, { showLoader = true } = {}) => {
+      const activeToken = token ?? authToken ?? localStorage.getItem("authToken");
+      if (!activeToken) {
         setUser(null);
+        if (showLoader) setLoading(false);
+        return null;
       }
-    } catch (err) {
-      console.log("verify error:", err);
-      setUser(null);
-      if (activeToken) localStorage.removeItem("authToken");
-    } finally {
-      if (showLoader) setLoading(false);
-    }
-  };
 
-  const signup = async (body, setToggle, e) => {
-    if (e?.preventDefault) e.preventDefault();
-    try {
-      const response = await api.post("/auth/signup", body);
-      if (response.status === 201 || response.status === 200) {
-        const token = response.data.authToken;
+      if (showLoader) setLoading(true);
+      try {
+        const response = await api.get("/auth/verify", {
+          headers: { Authorization: `Bearer ${activeToken}` },
+        });
+        setUser(response.data.payload);
+        setAuthError(null);
+        return response.data.payload;
+      } catch (error) {
+        console.log("verify error:", error);
+        persistToken(null);
+        setUser(null);
+        setAuthError(extractErrorMessage(error, "Session expired"));
+        return null;
+      } finally {
+        if (showLoader) setLoading(false);
+      }
+    },
+    [authToken, persistToken]
+  );
+
+  const signup = useCallback(
+    async (body, setToggle, event) => {
+      if (event?.preventDefault) event.preventDefault();
+      setAuthError(null);
+      try {
+        const response = await api.post("/auth/signup", body);
+        const token = response.data?.authToken;
         if (token) {
-          localStorage.setItem("authToken", token);
-          await verify(token);
+          persistToken(token);
+          await verify(token, { showLoader: true });
           navigate("/profile");
         } else if (typeof setToggle === "function") {
           setToggle((prev) => !prev);
         }
+        return true;
+      } catch (error) {
+        const message = extractErrorMessage(
+          error,
+          "We couldn’t create your account"
+        );
+        setAuthError(message);
+        return false;
       }
-    } catch (err) {
-      console.log("signup error:", err);
-    }
-  };
+    },
+    [navigate, persistToken, verify]
+  );
 
-  const login = async (body, e) => {
-    if (e?.preventDefault) e.preventDefault();
+  const login = useCallback(
+    async (body, event) => {
+      if (event?.preventDefault) event.preventDefault();
+      setAuthError(null);
+      try {
+        const response = await api.post("/auth/login", body);
+        const token = response.data?.authToken;
+        if (token) {
+          persistToken(token);
+          await verify(token, { showLoader: true });
+          navigate("/profile");
+        }
+        return true;
+      } catch (error) {
+        const message = extractErrorMessage(
+          error,
+          "Invalid email or password"
+        );
+        setAuthError(message);
+        return false;
+      }
+    },
+    [navigate, persistToken, verify]
+  );
+
+  const logout = useCallback(async () => {
     try {
-      const response = await api.post("/auth/login", body);
-      if (response.status === 200 || response.status === 201) {
-        const token = response.data.authToken;
-        if (token) localStorage.setItem("authToken", token);
-        await verify(token);
-        navigate("/profile");
-      }
-    } catch (err) {
-      console.log("login error:", err);
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.log("logout error:", error);
+    } finally {
+      persistToken(null);
+      setUser(null);
+      setAuthError(null);
+      navigate("/");
     }
-  };
+  }, [navigate, persistToken]);
 
-  const logout = () => {
-    api.post("/auth/logout").catch(() => {});
-    localStorage.removeItem("authToken");
-    setUser(null);
-    navigate("/");
-  };
-
-  const refreshUser = async () => {
-    const token = localStorage.getItem("authToken");
-    await verify(token, { showLoader: false });
-  };
+  const refreshUser = useCallback(async () => {
+    const token = authToken ?? localStorage.getItem("authToken");
+    if (!token) return null;
+    return verify(token, { showLoader: false });
+  }, [authToken, verify]);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    verify(token);
-  }, []);
+    verify(authToken);
+  }, [authToken, verify]);
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      authToken,
+      loading,
+      authError,
+      login,
+      signup,
+      logout,
+      refreshUser,
+      clearAuthError: () => setAuthError(null),
+      isAuthenticated: Boolean(user?.id),
+    }),
+    [authError, authToken, loading, login, logout, refreshUser, signup, user]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, login, signup, logout, refreshUser }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }

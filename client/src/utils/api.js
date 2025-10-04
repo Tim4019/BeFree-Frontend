@@ -1,13 +1,7 @@
 import axios from "axios";
 
-const rawBase = import.meta.env.VITE_API_URL || "http://localhost:5005/api";
-const normalizedBase = (() => {
-  const trimmed = rawBase.replace(/\/$/, "");
-  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
-})();
-
 const api = axios.create({
-  baseURL: normalizedBase,
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5005/api",
   withCredentials: true,
 });
 
@@ -18,5 +12,15 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("authToken");
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
