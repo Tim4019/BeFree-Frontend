@@ -53,7 +53,7 @@ export default function SettingsPage() {
     setPasswordForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // NEW: junior-friendly delete handler
+ 
   const handleDeleteAccount = async () => {
     // 1) Ask the user to confirm
     const confirmed = window.confirm(
