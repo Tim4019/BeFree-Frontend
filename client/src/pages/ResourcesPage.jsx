@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuthContext } from "../context/useAuthContext.js";
 
 const helplines = [
   {
@@ -211,6 +213,7 @@ function BreathingTimer() {
 }
 
 export default function ResourcesPage() {
+  const { user } = useAuthContext();
   const [favoriteHelplines, setFavoriteHelplines] = useState(() =>
     loadStoredList(HELPLINE_STORAGE_KEY)
   );
@@ -240,14 +243,79 @@ export default function ResourcesPage() {
     window.localStorage.setItem(CRISIS_PLAN_STORAGE_KEY, JSON.stringify(plan));
   }, [plan]);
 
-  const pinnedHelplines = useMemo(
-    () => helplines.filter((line) => favoriteHelplines.includes(line.region)),
-    [favoriteHelplines]
+  if (!user) {
+    return (
+      <div className="page">
+        <section className="glass-panel">
+          <span className="badge">Resources</span>
+          <h1 className="title">Recovery resources</h1>
+          <p className="subtitle">
+            Log in to unlock interactive tools like pinned helplines, printable
+            plans, and guided breathing timers. Here’s a quick list you can use
+            right away.
+          </p>
+          <div className="actions">
+            <Link className="btn btn-primary" to="/signup">
+              Create a free account
+            </Link>
+            <Link className="btn" to="/login">
+              Log in
+            </Link>
+          </div>
+        </section>
+
+        <section className="glass-panel">
+          <h2 className="title">Helplines</h2>
+          <div className="helpline-grid">
+            {helplines.map((line) => (
+              <article key={line.region} className="helpline-card">
+                <h3>{line.region}</h3>
+                <p className="helpline-number">{line.number}</p>
+                <p>{line.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="glass-panel reading">
+          <h2 className="title">Reading that offers perspective</h2>
+          <div className="reading-grid">
+            {readingList.map((book) => (
+              <article key={book.title} className="reading-card">
+                <h3>{book.title}</h3>
+                <p className="muted">{book.author}</p>
+                <p>{book.insight}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="glass-panel">
+          <h2 className="title">Grounding practices</h2>
+          <div className="practices-grid">
+            {practices.map((practice) => (
+              <article key={practice.title} className="practice-card">
+                <div className="practice-icon" aria-hidden="true">
+                  {practice.emoji}
+                </div>
+                <div className="practice-body">
+                  <h3>{practice.title}</h3>
+                  <p>{practice.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  const pinnedHelplines = helplines.filter((line) =>
+    favoriteHelplines.includes(line.region)
   );
 
-  const pinnedPractices = useMemo(
-    () => practices.filter((item) => favoritePractices.includes(item.title)),
-    [favoritePractices]
+  const pinnedPractices = practices.filter((item) =>
+    favoritePractices.includes(item.title)
   );
 
   const toggleHelpline = (region) => {
